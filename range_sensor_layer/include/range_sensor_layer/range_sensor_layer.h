@@ -40,7 +40,7 @@ public:
 private:
   void reconfigureCB(range_sensor_layer::RangeSensorLayerConfig &config, uint32_t level);
 
-  void bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message);
+  void bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message, const std::string& topic);
   void processRangeMsg(sensor_msgs::Range& range_message);
   void processFixedRangeMsg(sensor_msgs::Range& range_message);
   void processVariableRangeMsg(sensor_msgs::Range& range_message);

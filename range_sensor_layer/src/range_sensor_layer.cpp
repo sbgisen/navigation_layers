@@ -198,6 +198,7 @@ void RangeSensorLayer::reconfigureCB(range_sensor_layer::RangeSensorLayerConfig 
 void RangeSensorLayer::bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& range_message,
                                               const std::string& topic)
 {
+  boost::mutex::scoped_lock lock(range_message_mutex_);
   range_msgs_buffers_[topic].push_back(*range_message);
   if (range_msgs_buffers_[topic].size() > range_msgs_buffer_size_)
     range_msgs_buffers_[topic].pop_front();

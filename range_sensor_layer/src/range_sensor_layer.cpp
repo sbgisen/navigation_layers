@@ -183,12 +183,12 @@ void RangeSensorLayer::reconfigureCB(range_sensor_layer::RangeSensorLayerConfig 
     current_ = false;
   }
 
-  if (config.ranges_buffer_size < range_msgs_buffer_size_)
+  if (range_msgs_buffer_size_ > static_cast<size_t>(config.ranges_buffer_size))
   {
     boost::mutex::scoped_lock lock(range_message_mutex_);
     for(auto& range_topic: range_msgs_buffers_)
     {
-      while (range_topic.second.size() > config.ranges_buffer_size)
+      while (range_topic.second.size() > static_cast<size_t>(config.ranges_buffer_size))
         range_topic.second.pop_front();
     }
   }
@@ -542,12 +542,12 @@ void RangeSensorLayer::reset()
 
 void RangeSensorLayer::deactivate()
 {
-  range_msgs_buffer_.clear();
+  range_msgs_buffers_.clear();
 }
 
 void RangeSensorLayer::activate()
 {
-  range_msgs_buffer_.clear();
+  range_msgs_buffers_.clear();
 }
 
 }  // namespace range_sensor_layer

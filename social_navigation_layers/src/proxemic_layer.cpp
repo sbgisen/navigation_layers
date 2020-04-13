@@ -14,9 +14,14 @@ double gaussian(double x, double y, double x0, double y0, double A, double varx,
     double angle = atan2(dy,dx);
     double mx = cos(angle-skew) * h;
     double my = sin(angle-skew) * h;
-    double f1 = pow(mx, 2.0)/(2.0 * varx), 
+    double f1 = pow(mx, 2.0)/(2.0 * varx),
            f2 = pow(my, 2.0)/(2.0 * vary);
     return A * exp(-(f1 + f2));
+}
+
+double uniform(double x, double y, double x0, double y0, double A, double radius) {
+    bool in_circle = (pow(x-x0, 2) + pow(y-y0, 2) <= pow(radius, 2));
+    return (in_circle) ? A : 0.;
 }
 
 double get_radius(double cutoff, double A, double var){
@@ -34,26 +39,26 @@ namespace social_navigation_layers
         f_ = boost::bind(&ProxemicLayer::configure, this, _1, _2);
         server_->setCallback(f_);
     }
-    
+
     void ProxemicLayer::updateBoundsFromPeople(double* min_x, double* min_y, double* max_x, double* max_y)
     {
         std::list<people_msgs::Person>::iterator p_it;
-        
+
         for(p_it = transformed_people_.begin(); p_it != transformed_people_.end(); ++p_it){
             people_msgs::Person person = *p_it;
-             
+
             double mag = sqrt(pow(person.velocity.x,2) + pow(person.velocity.y, 2));
             double factor = 1.0 + mag * factor_;
             double point = get_radius(cutoff_, amplitude_, covar_ * factor );
-              
+
             *min_x = std::min(*min_x, person.position.x - point);
             *min_y = std::min(*min_y, person.position.y - point);
             *max_x = std::max(*max_x, person.position.x + point);
             *max_y = std::max(*max_y, person.position.y + point);
-              
+
         }
     }
-    
+
     void ProxemicLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j){
         boost::recursive_mutex::scoped_lock lock(lock_);
         if(!enabled_) return;
@@ -62,11 +67,11 @@ namespace social_navigation_layers
           return;
         if( cutoff_ >= amplitude_)
             return;
-        
+
         std::list<people_msgs::Person>::iterator p_it;
         costmap_2d::Costmap2D* costmap = layered_costmap_->getCostmap();
         double res = costmap->getResolution();
-        
+
         for(p_it = transformed_people_.begin(); p_it != transformed_people_.end(); ++p_it){
             people_msgs::Person person = *p_it;
             double angle = atan2(person.velocity.y, person.velocity.x);
@@ -74,10 +79,10 @@ namespace social_navigation_layers
             double factor = 1.0 + mag * factor_;
             double base = get_radius(cutoff_, amplitude_, covar_);
             double point = get_radius(cutoff_, amplitude_, covar_ * factor );
-            
+
             unsigned int width = std::max(1, int( (base + point) / res )),
                           height = std::max(1, int( (base + point) / res ));
-                          
+
             double cx = person.position.x, cy = person.position.y;
 
             double ox, oy;
@@ -128,20 +133,22 @@ namespace social_navigation_layers
                   double ma = atan2(y-cy,x-cx);
                   double diff = angles::shortest_angular_distance(angle, ma);
                   double a;
-                  if(fabs(diff)<M_PI/2)
+                  if (use_gaussian_) {
+                    if(fabs(diff)<M_PI/2) {
                       a = gaussian(x,y,cx,cy,amplitude_,covar_*factor,covar_,angle);
-                  else
-                      a = gaussian(x,y,cx,cy,amplitude_,covar_,       covar_,0);
-
-                  if(a < cutoff_)
-                    continue;
+                    } else {
+                      a = gaussian(x,y,cx,cy,amplitude_,covar_,covar_,0);
+                    }
+                    if (a < cutoff_)
+                      continue;
+                  } else {
+                    a = uniform(x, y, cx, cy, amplitude_, covar_);
+                  }
                   unsigned char cvalue = (unsigned char) a;
                   costmap->setCost(i+dx, j+dy, std::max(cvalue, old_cost));
 
               }
-            } 
-
-            
+            }
         }
     }
 
@@ -152,6 +159,7 @@ namespace social_navigation_layers
         factor_ = config.factor;
         people_keep_time_ = ros::Duration(config.keep_time);
         enabled_ = config.enabled;
+        use_gaussian_ = config.use_gaussian;
     }
 
 

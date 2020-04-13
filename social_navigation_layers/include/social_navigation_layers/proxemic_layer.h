@@ -6,6 +6,7 @@
 #include <social_navigation_layers/ProxemicLayerConfig.h>
 
 double gaussian(double x, double y, double x0, double y0, double A, double varx, double vary, double skew);
+double uniform(double x, double y, double x0, double y0, double A, double radius);
 double get_radius(double cutoff, double A, double var);
 
 namespace social_navigation_layers
@@ -22,6 +23,7 @@ namespace social_navigation_layers
     protected:
       void configure(ProxemicLayerConfig &config, uint32_t level);
       double cutoff_, amplitude_, covar_, factor_;
+      bool use_gaussian_;
       dynamic_reconfigure::Server<ProxemicLayerConfig>* server_;
       dynamic_reconfigure::Server<ProxemicLayerConfig>::CallbackType f_;
   };
@@ -29,4 +31,3 @@ namespace social_navigation_layers
 
 
 #endif
-

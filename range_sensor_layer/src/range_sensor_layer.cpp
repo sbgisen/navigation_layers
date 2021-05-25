@@ -44,11 +44,9 @@ void RangeSensorLayer::onInitialize()
   InputSensorType input_sensor_type = ALL;
   std::string sensor_type_name;
   nh.param("input_sensor_type", sensor_type_name, std::string("ALL"));
-  nh.param("ranges_buffer_size", (int&)range_msgs_buffer_size_, 1);
-
   nh.param("use_decay", use_decay_, false);
   nh.param("pixel_decay", pixel_decay_, 10.0);
-  nh.param("transform_tolerance_", transform_tolerance_, 0.3);
+  nh.param("transform_tolerance", transform_tolerance_, 0.3);
 
   boost::to_upper(sensor_type_name);
   ROS_INFO("%s: %s as input_sensor_type given", name_.c_str(), sensor_type_name.c_str());

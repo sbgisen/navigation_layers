@@ -70,7 +70,7 @@ private:
 
   boost::function<void(sensor_msgs::Range& range_message)> processRangeMessageFunc_;
   boost::mutex range_message_mutex_;
-  size_t range_msgs_buffer_size_;
+  unsigned int range_msgs_buffer_size_;
   std::unordered_map<std::string, std::list<sensor_msgs::Range>> range_msgs_buffers_;
   std::map<std::pair<unsigned int, unsigned int>, double> marked_point_history_;
 

@@ -1,17 +1,19 @@
 // Copyright 2018 David V. Lu!!
 #ifndef RANGE_SENSOR_LAYER_RANGE_SENSOR_LAYER_H_
 #define RANGE_SENSOR_LAYER_RANGE_SENSOR_LAYER_H_
+
+#include <list>
+#include <deque>
+#include <string>
+#include <vector>
+#include <unordered_map>
+
 #include <ros/ros.h>
 #include <costmap_2d/costmap_layer.h>
 #include <costmap_2d/layered_costmap.h>
 #include <sensor_msgs/Range.h>
 #include <range_sensor_layer/RangeSensorLayerConfig.h>
 #include <dynamic_reconfigure/server.h>
-#include <list>
-#include <map>
-#include <string>
-#include <utility>
-#include <vector>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace range_sensor_layer
@@ -68,7 +70,8 @@ private:
 
   boost::function<void(sensor_msgs::Range& range_message)> processRangeMessageFunc_;
   boost::mutex range_message_mutex_;
-  std::list<sensor_msgs::Range> range_msgs_buffer_;
+  size_t range_msgs_buffer_size_;
+  std::unordered_map<std::string, std::list<sensor_msgs::Range>> range_msgs_buffers_;
   std::map<std::pair<unsigned int, unsigned int>, double> marked_point_history_;
 
   double max_angle_, phi_v_;

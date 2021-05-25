@@ -41,13 +41,10 @@ void RangeSensorLayer::onInitialize()
   nh.param("ns", topics_ns, std::string());
   nh.param("topics", topic_names, topic_names);
 
-  int size;
-  nh.param("ranges_buffer_size", size, 1);
-  range_msgs_buffer_size_ = size;
-
   InputSensorType input_sensor_type = ALL;
   std::string sensor_type_name;
   nh.param("input_sensor_type", sensor_type_name, std::string("ALL"));
+  nh.param("ranges_buffer_size", (int&)range_msgs_buffer_size_, 1);
 
   nh.param("use_decay", use_decay_, false);
   nh.param("pixel_decay", pixel_decay_, 10.0);
@@ -207,17 +204,10 @@ void RangeSensorLayer::bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& 
 void RangeSensorLayer::updateCostmap()
 {
   std::list<sensor_msgs::Range> range_msgs_buffer_copy;
-
-  range_message_mutex_.lock();
-  range_msgs_buffer_copy = std::list<sensor_msgs::Range>(range_msgs_buffer_);
-  range_msgs_buffer_.clear();
-  range_message_mutex_.unlock();
-
-  for (std::list<sensor_msgs::Range>::iterator range_msgs_it = range_msgs_buffer_copy.begin();
-       range_msgs_it != range_msgs_buffer_copy.end(); range_msgs_it++)
+  for (auto& range_topic: range_msgs_buffers_)
   {
     range_message_mutex_.lock();
-    auto range_msgs_buffer_copy = range_topic.second;
+    range_msgs_buffer_copy = std::list<sensor_msgs::Range>(range_topic.second);
     range_topic.second.clear();
     range_message_mutex_.unlock();
 

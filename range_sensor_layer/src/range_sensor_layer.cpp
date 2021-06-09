@@ -181,7 +181,7 @@ void RangeSensorLayer::reconfigureCB(range_sensor_layer::RangeSensorLayerConfig 
   if (range_msgs_buffer_size_ > static_cast<size_t>(config.ranges_buffer_size))
   {
     boost::mutex::scoped_lock lock(range_message_mutex_);
-    for(auto& range_topic: range_msgs_buffers_)
+    for (auto& range_topic: range_msgs_buffers_)
     {
       while (range_topic.second.size() > static_cast<size_t>(config.ranges_buffer_size))
         range_topic.second.pop_front();
@@ -201,18 +201,17 @@ void RangeSensorLayer::bufferIncomingRangeMsg(const sensor_msgs::RangeConstPtr& 
 
 void RangeSensorLayer::updateCostmap()
 {
-  std::list<sensor_msgs::Range> range_msgs_buffer_copy;
+  std::list<sensor_msgs::Range> range_msgs_to_update;
+  range_message_mutex_.lock();
   for (auto& range_topic: range_msgs_buffers_)
   {
-    range_message_mutex_.lock();
-    range_msgs_buffer_copy = std::list<sensor_msgs::Range>(range_topic.second);
-    range_topic.second.clear();
-    range_message_mutex_.unlock();
+    range_msgs_to_update.splice(range_msgs_to_update.end(), range_topic.second);
+  }
+  range_message_mutex_.unlock();
 
-    for (auto& range_msg : range_msgs_buffer_copy)
-    {
-      processRangeMessageFunc_(range_msg);
-    }
+  for (auto& range_msg : range_msgs_to_update)
+  {
+    processRangeMessageFunc_(range_msg);
   }
 }
 
@@ -530,11 +529,13 @@ void RangeSensorLayer::reset()
 
 void RangeSensorLayer::deactivate()
 {
+  boost::mutex::scoped_lock lock(range_message_mutex_);
   range_msgs_buffers_.clear();
 }
 
 void RangeSensorLayer::activate()
 {
+  boost::mutex::scoped_lock lock(range_message_mutex_);
   range_msgs_buffers_.clear();
 }
 
